@@ -26,19 +26,33 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   Game _game = Game();
   int tries = 0;
   int score = 0;
   bool gameCompleted = false;
+  bool isCheckingMatch = false; // Add this flag
   late DateTime startTime;
   late Duration elapsedTime;
   String selectedLevel = "";
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
     startTime = DateTime.now();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animation = Tween(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void startGame(String level) {
@@ -117,14 +131,14 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-            const Text(
-            "Memory Game",
-            style: TextStyle(
-              fontSize: 48.0,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFF3FF90),
-            ),
-          ),
+              const Text(
+                "Memory Game",
+                style: TextStyle(
+                  fontSize: 48.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFF3FF90),
+                ),
+              ),
               const SizedBox(height: 24.0),
               const Text(
                 "Select Level",
@@ -200,21 +214,25 @@ class _HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      if (!_game.matchCheck.any(
+                      if (!isCheckingMatch && !_game.matchCheck.any(
                               (element) => element.containsKey(index))) {
                         setState(() {
-
                           _game.gameImg![index] =
                           _game.cards_list[index];
                           _game.matchCheck
                               .add({index: _game.cards_list[index]});
+                          _controller.forward(from: 0.0);
                         });
                         if (_game.matchCheck.length == 2) {
-                          tries++;
+                          setState(() {
+                            tries++;
+                            isCheckingMatch = true;
+                          });
                           if (_game.matchCheck[0].values.first ==
                               _game.matchCheck[1].values.first) {
                             score += 10;
                             _game.matchCheck.clear();
+                            isCheckingMatch = false;
                             checkGameCompletion();
                           } else {
                             score -= 2;
@@ -228,13 +246,16 @@ class _HomePageState extends State<HomePage> {
                                 _game.matchCheck[1].keys.first] =
                                     _game.hiddenCardPath;
                                 _game.matchCheck.clear();
+                                isCheckingMatch = false;
                               });
                             });
                           }
                         }
                       }
                     },
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A5319),
