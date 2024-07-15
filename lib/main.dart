@@ -203,13 +203,14 @@ class _HomePageState extends State<HomePage> {
                       if (!_game.matchCheck.any(
                               (element) => element.containsKey(index))) {
                         setState(() {
-                          tries++;
+
                           _game.gameImg![index] =
                           _game.cards_list[index];
                           _game.matchCheck
                               .add({index: _game.cards_list[index]});
                         });
                         if (_game.matchCheck.length == 2) {
+                          tries++;
                           if (_game.matchCheck[0].values.first ==
                               _game.matchCheck[1].values.first) {
                             score += 10;
